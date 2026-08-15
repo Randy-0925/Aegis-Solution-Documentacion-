@@ -17,9 +17,10 @@ Diseño e implementación de la infraestructura de red para **Élite Tecnologico
 
 | Sede | Rol | Dominio |
 |------|-----|---------|
-| 🏙️ **Santo Domingo** | Sede Central (Core) | `santodomingo.Solutions` |
-| 🌆 **Santiago** | Sede Sucursal | `santiago.Solutions` |
-| 🏘️ **La Romana** | Sede Sucursal | `romana.Solutions` |
+| 🏙️ **Santo Domingo** | Sede Central (Core) | `aegis.com.do/SantoDomingo` |
+| 🌆 **Santiago** | Sede Sucursal | `aegis.com.do/Santiago` |
+| 🏘️ **La Romana** | Sede Sucursal | `aegis.com.do/La romana` |
+| 🌆 **Puerto Plata** | Sede Sucursal |  `aegis.com.do/PuertoPlata` 
 
 La arquitectura implementa un modelo **jerárquico de 3 capas** (Núcleo → Distribución → Acceso), con segmentación por VLANs, enrutamiento dinámico OSPF multi-área, VPN IPsec inter-sedes, redundancia HSRP y monitoreo con SNMP/Zabbix.
 
