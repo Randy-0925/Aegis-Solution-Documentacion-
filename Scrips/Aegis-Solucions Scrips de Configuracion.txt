@@ -1,1 +1,1003 @@
+## 3. Scripts de Configuración de Seguridad por Sucursal y Equipo
+
+---
+
+### SUCURSAL 1: SANTO DOMINGO (SEDE CENTRAL / HUB)
+
+#### 1. Router Principal `R-SD`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD Y DMVPN IPSEC - R-SD (SANTO DOMINGO)
+! ============================================================
+enable
+configure terminal
+
+ip access-list standard ACL-ADMIN-VTY
+ remark Permitir solo subredes de Soporte Técnico y Administración
+ permit 10.0.17.0 0.0.0.31
+ permit 10.0.16.192 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ transport input ssh
+ exec-timeout 5 0
+ login local
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 3600
+crypto isakmp key AEGIS-2026-VPN address 0.0.0.0 0.0.0.0
+
+crypto ipsec transform-set AEGIS-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+
+crypto ipsec profile AEGIS-PROFILE
+ set transform-set AEGIS-TS
+
+interface Tunnel1
+ description TUNNEL HUB SANTO DOMINGO
+ ip address 10.1.100.1 255.255.255.0
+ ip mtu 1400
+ tunnel source Ethernet0/0
+ tunnel mode gre multipoint
+ ip nhrp network-id 2026
+ ip nhrp map multicast dynamic
+ ip nhrp authentication AEGIS
+ ip ospf network point-to-multipoint
+ ip ospf 1 area 0
+ tunnel protection ipsec profile AEGIS-PROFILE
+ no shutdown
+
+no ip http server
+no ip http secure-server
+no ip source-route
+ip ssh authentication-retries 2
+ip ssh time-out 60
+
+end
+write memory
+```
+
+#### 2. Multicapa Principal `SWM-1`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD - SWM-1 (CORE SANTO DOMINGO)
+! ============================================================
+enable
+configure terminal
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+interface range Ethernet0/1 - 3
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+interface range Ethernet1/0 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,50,60,70
+no ip dhcp snooping information option
+
+interface Ethernet0/0
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface Port-channel1
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface range Ethernet1/0 - 2
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip arp inspection vlan 10,20,30,40,50,60,70
+ip arp inspection validate src-mac dst-mac ip
+
+spanning-tree loopguard default
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.17.0 0.0.0.31
+ permit 10.0.16.192 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+
+end
+write memory
+```
+
+#### 3. Multicapa Secundario `SWM-2`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD - SWM-2 (CORE BACKUP SANTO DOMINGO)
+! ============================================================
+enable
+configure terminal
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+interface range Ethernet0/1 - 3
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+interface range Ethernet1/0 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,50,60,70
+no ip dhcp snooping information option
+
+interface Ethernet0/0
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface Port-channel1
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface range Ethernet1/0 - 2
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip arp inspection vlan 10,20,30,40,50,60,70
+ip arp inspection validate src-mac dst-mac ip
+
+spanning-tree loopguard default
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.17.0 0.0.0.31
+ permit 10.0.16.192 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+
+end
+write memory
+```
+
+#### 4. Switches de Acceso (`SW-10`, `SW-11`, `SW-12`)
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD - SW-10 / SW-11 / SW-12 (SANTO DOMINGO)
+! ============================================================
+enable
+configure terminal
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+interface range Ethernet0/0 - 1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,50,60,70
+no ip dhcp snooping information option
+
+ip arp inspection vlan 10,20,30,40,50,60,70
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet0/2 - 3
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping limit rate 15
+ ip verify source
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+interface range Ethernet1/1 - 3, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.17.0 0.0.0.31
+ permit 10.0.16.192 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+
+end
+write memory
+```
+
+---
+
+### SUCURSAL 2: SANTIAGO (SEDE SPOKE + SERVIDORES)
+
+#### 1. Router Spoke `R-Santiago`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD Y DMVPN IPSEC - R-SANTIAGO
+! ============================================================
+enable
+configure terminal
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 3600
+crypto isakmp key AEGIS-2026-VPN address 0.0.0.0 0.0.0.0
+
+crypto ipsec transform-set AEGIS-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+
+crypto ipsec profile AEGIS-PROFILE
+ set transform-set AEGIS-TS
+
+interface Tunnel1
+ description TUNNEL SPOKE SANTIAGO
+ ip address 10.1.100.2 255.255.255.0
+ ip mtu 1400
+ tunnel source Ethernet0/0
+ tunnel mode gre multipoint
+ ip nhrp network-id 2026
+ ip nhrp map 10.1.100.1 1.0.0.2
+ ip nhrp map multicast 1.0.0.2
+ ip nhrp nhs 10.1.100.1
+ ip nhrp authentication AEGIS
+ ip ospf network point-to-multipoint
+ ip ospf 1 area 0
+ tunnel protection ipsec profile AEGIS-PROFILE
+ no shutdown
+
+interface Ethernet0/1.99
+ ip ospf 1 area 20
+
+router ospf 1
+ router-id 2.2.2.2
+ passive-interface default
+ no passive-interface Ethernet0/1.99
+ no passive-interface Tunnel1
+ network 10.0.10.0 0.0.1.255 area 20
+ network 10.0.12.0 0.0.0.255 area 20
+ network 10.0.14.0 0.0.0.255 area 20
+ network 10.0.17.32 0.0.0.15 area 20
+ network 10.0.19.0 0.0.0.3 area 20
+ network 10.1.100.0 0.0.0.255 area 0
+ default-information originate
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.12.0 0.0.0.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ transport input ssh
+ exec-timeout 5 0
+ login local
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+no ip http server
+no ip http secure-server
+
+end
+write memory
+```
+
+#### 2. Switch Distribución `SW-1`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD COMPLETO - SW-1 (SANTIAGO)
+! ============================================================
+enable
+configure terminal
+
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+ip domain-name aegis.com.do
+ip ssh version 2
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 99,110,130,140,199 priority 24576
+
+interface Ethernet0/0
+ switchport trunk native vlan 999
+ switchport nonegotiate
+
+interface range Ethernet0/1 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+interface range Ethernet0/3, Ethernet1/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+banner motd #
+*******************************************************
+AEGIS SOLUTIONS - SEDE SANTIAGO (SW-1 DISTRIBUCION)
+ACCESO NO AUTORIZADO ESTA ESTRICTAMENTE PROHIBIDO.
+*******************************************************
+#
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.12.0 0.0.0.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+#### 3. Switch L3 / Acceso `SW-2`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD COMPLETO - SW-2 (SANTIAGO)
+! ============================================================
+enable
+configure terminal
+
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+ip domain-name aegis.com.do
+ip ssh version 2
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 99,110,130,140,199 priority 28672
+
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+interface range Ethernet0/0 - 1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 110,130,140,199
+no ip dhcp snooping information option
+
+interface Ethernet0/2
+ description Server Linux (DHCP-DNS-NFS-RADIUS-FTP)
+ switchport mode access
+ switchport access vlan 199
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 5
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping trust
+ ip arp inspection trust
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+ip arp inspection vlan 110,130,140,199
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet0/3, Ethernet1/0 - 1, Ethernet1/3
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping limit rate 15
+ ip verify source
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+interface range Ethernet1/2, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+banner motd #
+*******************************************************
+AEGIS SOLUTIONS - SEDE SANTIAGO (SW-2 CORE/ACCESO)
+ACCESO NO AUTORIZADO ESTA ESTRICTAMENTE PROHIBIDO.
+*******************************************************
+#
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.12.0 0.0.0.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+---
+
+### SUCURSAL 3: LA ROMANA (SEDE SPOKE)
+
+#### 1. Router Spoke `R-Romana`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD Y DMVPN IPSEC - R-ROMANA
+! ============================================================
+enable
+configure terminal
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 3600
+crypto isakmp key AEGIS-2026-VPN address 0.0.0.0 0.0.0.0
+
+crypto ipsec transform-set AEGIS-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+
+crypto ipsec profile AEGIS-PROFILE
+ set transform-set AEGIS-TS
+
+interface Tunnel1
+ description TUNNEL SPOKE LA ROMANA
+ ip address 10.1.100.3 255.255.255.0
+ ip mtu 1400
+ tunnel source Ethernet0/0
+ tunnel mode gre multipoint
+ ip nhrp network-id 2026
+ ip nhrp map 10.1.100.1 1.0.0.2
+ ip nhrp map multicast 1.0.0.2
+ ip nhrp nhs 10.1.100.1
+ ip nhrp authentication AEGIS
+ ip ospf network point-to-multipoint
+ ip ospf 1 area 0
+ tunnel protection ipsec profile AEGIS-PROFILE
+ no shutdown
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.15.128 0.0.0.127
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ transport input ssh
+ exec-timeout 5 0
+ login local
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+no ip http server
+no ip http secure-server
+
+end
+write memory
+```
+
+#### 2. Switch Distribución `SW-3`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD - SW-3 (LA ROMANA)
+! ============================================================
+enable
+configure terminal
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+interface Ethernet0/0
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+interface range Ethernet0/1 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+
+interface range Ethernet0/3, Ethernet1/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.15.128 0.0.0.127
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+#### 3. Switch de Acceso `SW-9`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD - SW-9 (LA ROMANA)
+! ============================================================
+enable
+configure terminal
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+interface range Ethernet0/1 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface Port-channel1
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 210,220,230
+no ip dhcp snooping information option
+
+ip arp inspection vlan 210,220,230
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet1/1 - 3
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping limit rate 15
+ ip verify source
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+interface range Ethernet0/0, Ethernet0/3, Ethernet1/0, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.15.128 0.0.0.127
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+---
+
+### SUCURSAL 4: PUERTO PLATA (NUEVA SEDE SPOKE - CIBERSEGURIDAD)
+
+#### 1. Router Spoke `R-PUERTOPLATA`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD Y DMVPN IPSEC - R-PUERTOPLATA
+! ============================================================
+enable
+configure terminal
+
+crypto isakmp policy 10
+ encr aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 3600
+crypto isakmp key AEGIS-2026-VPN address 0.0.0.0 0.0.0.0
+
+crypto ipsec transform-set AEGIS-TS esp-aes 256 esp-sha256-hmac
+ mode transport
+
+crypto ipsec profile AEGIS-PROFILE
+ set transform-set AEGIS-TS
+
+interface Tunnel1
+ description TUNNEL SPOKE PUERTO PLATA
+ ip address 10.1.100.4 255.255.255.0
+ ip mtu 1400
+ tunnel source Ethernet0/0
+ tunnel mode gre multipoint
+ ip nhrp network-id 2026
+ ip nhrp map 10.1.100.1 1.0.0.2
+ ip nhrp map multicast 1.0.0.2
+ ip nhrp nhs 10.1.100.1
+ ip nhrp authentication AEGIS
+ ip ospf network point-to-multipoint
+ ip ospf 1 area 0
+ tunnel protection ipsec profile AEGIS-PROFILE
+ no shutdown
+
+interface Ethernet0/1
+ description TRUNK HACIA SW-5
+ no ip address
+ duplex full
+ no shutdown
+
+router ospf 1
+ router-id 5.5.5.5
+ passive-interface default
+ no passive-interface Ethernet0/1.310
+ no passive-interface Ethernet0/1.320
+ no passive-interface Ethernet0/1.330
+ no passive-interface Ethernet0/1.340
+ no passive-interface Ethernet0/1.350
+ no passive-interface Tunnel1
+ network 10.0.0.0 0.0.1.255 area 40
+ network 10.0.2.0 0.0.1.255 area 40
+ network 10.0.4.0 0.0.1.255 area 40
+ network 10.0.6.0 0.0.1.255 area 40
+ network 10.0.17.64 0.0.0.15 area 40
+ network 10.1.100.0 0.0.0.255 area 0
+ default-information originate
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.0.0 0.0.1.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ transport input ssh
+ exec-timeout 5 0
+ login local
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+no ip http server
+no ip http secure-server
+no ip source-route
+
+end
+write memory
+```
+
+#### 2. Switch Distribución `SW-5`
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD COMPLETO - SW-5 (PUERTO PLATA)
+! ============================================================
+enable
+configure terminal
+
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+ip domain-name aegis.com.do
+ip ssh version 2
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+spanning-tree vlan 310,320,330,340,350 priority 24576
+
+interface Ethernet0/0
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+interface range Ethernet0/1 - 2
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ spanning-tree guard root
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 310,320,330,340,350
+no ip dhcp snooping information option
+
+ip arp inspection vlan 310,320,330,340,350
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet0/3, Ethernet1/0 - 3, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+banner motd #
+*******************************************************
+AEGIS SOLUTIONS - PUERTO PLATA (SW-5 DISTRIBUCION)
+ACCESO NO AUTORIZADO ESTA ESTRICTAMENTE PROHIBIDO.
+*******************************************************
+#
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.0.0 0.0.1.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+#### 3. Switch de Acceso `sw-30` (VLAN 310 DFIR, VLAN 320 MALWARE)
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD COMPLETO - SW-30 (PUERTO PLATA)
+! ============================================================
+enable
+configure terminal
+
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+ip domain-name aegis.com.do
+ip ssh version 2
+crypto key generate rsa modulus 2048
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+interface Ethernet0/0
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 310,320
+no ip dhcp snooping information option
+
+ip arp inspection vlan 310,320
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet0/1 - 2
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping limit rate 15
+ ip verify source
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+interface range Ethernet0/3, Ethernet1/0 - 3, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+banner motd #
+*******************************************************
+AEGIS SOLUTIONS - PUERTO PLATA (SW-30 ACCESO DFIR/MALWARE)
+ACCESO NO AUTORIZADO ESTA ESTRICTAMENTE PROHIBIDO.
+*******************************************************
+#
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.0.0 0.0.1.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+#### 4. Switch de Acceso `sw-31` (VLAN 330 THREAT INTEL, VLAN 340 RED TEAM, VLAN 350 SOC)
+```cisco
+! ============================================================
+! ENDURECIMIENTO DE SEGURIDAD COMPLETO - SW-31 (PUERTO PLATA)
+! ============================================================
+enable
+configure terminal
+
+service password-encryption
+service timestamps debug datetime msec
+service timestamps log datetime msec
+ip domain-name aegis.com.do
+ip ssh version 2
+crypto key generate rsa modulus 2048
+
+vlan 999
+ name UNUSED_BLACKHOLE
+
+vlan dot1q tag native
+
+spanning-tree mode rapid-pvst
+spanning-tree extend system-id
+
+errdisable recovery cause psecure-violation
+errdisable recovery interval 300
+
+interface Ethernet0/0
+ switchport trunk native vlan 999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ ip arp inspection trust
+
+ip dhcp snooping
+ip dhcp snooping vlan 330,340,350
+no ip dhcp snooping information option
+
+ip arp inspection vlan 330,340,350
+ip arp inspection validate src-mac dst-mac ip
+
+interface range Ethernet0/1 - 3
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security violation restrict
+ switchport port-security mac-address sticky
+ ip dhcp snooping limit rate 15
+ ip verify source
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+
+interface range Ethernet1/0 - 3, Ethernet2/0 - 3, Ethernet3/0 - 3
+ switchport mode access
+ switchport access vlan 999
+ shutdown
+
+banner motd #
+*******************************************************
+AEGIS SOLUTIONS - PUERTO PLATA (SW-31 ACCESO INTEL/REDTEAM/SOC)
+ACCESO NO AUTORIZADO ESTA ESTRICTAMENTE PROHIBIDO.
+*******************************************************
+#
+
+ip access-list standard ACL-ADMIN-VTY
+ permit 10.0.0.0 0.0.1.255
+ permit 10.0.17.0 0.0.0.31
+ deny any log
+
+line con 0
+ exec-timeout 5 0
+ logging synchronous
+
+line vty 0 4
+ access-class ACL-ADMIN-VTY in
+ exec-timeout 5 0
+ login local
+ transport input ssh
+
+end
+write memory
+```
+
+---
 
