@@ -157,4 +157,4 @@ Consulta el directorio [`docs/`](./docs/) para:
 ## 📜 Licencia
 
 Proyecto académico — ITLA 2026 | Conmutación y Enrutamiento  
-Prof. Onel Luis Pelegrino
+Prof. Onel Luis Pelegrino/ Empresa Aegis-Solutions 
