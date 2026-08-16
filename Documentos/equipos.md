@@ -34,7 +34,7 @@ tags:
 | 9 | SW-9 | La Romana | Acceso L2 | Catalyst 2960 | ✅ Implementado |
 | 10 | ISP-NUBE | Nube | ISP (NAT de salida) | Router emulado | ✅ Implementado |
 
-### Fase 2 — Scripts Creados ⚠️ (Pendientes de integración)
+### Fase 2 — Scripts Creados 
 
 | #   | Equipo          | Sede                | Rol                       | Modelo        |
 | --- | --------------- | ------------------- | ------------------------- | ------------- |
@@ -148,7 +148,7 @@ tags:
 | **Credenciales**  | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026`                                                |
 | **IPsec Key**     | `AEGIS-2026-VPN`                                                                                                            |
 | **NHRP Auth**     | `AEGIS`                                                                                                                     |
-| **Estado**        | ⚠️ Script creado. Pendiente de integración con switches y servidores.                                                       |
+| **Estado**        | Implementado                                                      |
 |                   |                                                                                                                             |
 
 ### 6. Switch SW-1 (Santiago) — Distribución L3
@@ -162,7 +162,7 @@ tags:
 | **Uplinks** | `e0/0` → R-SANTIAGO (trunk VLAN 99) |
 | **STP** | Root Bridge (prioridad 24576) — Rapid PVST |
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
-| **Estado** | ⚠️ Script creado (configuración básica). Falta endurecimiento de seguridad. |
+| **Estado** |                                                                                    |
 
 ### 7. Switch SW-2 (Santiago) — Acceso L3 / Core Local
 
@@ -175,7 +175,6 @@ tags:
 | **STP** | Root Bridge Secundario (prioridad 28672) — Rapid PVST |
 | **Puerto Servidor** | `e0/2` → Servidor Linux (VLAN 199, Port Security máx. 5) |
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
-| **Estado** | ⚠️ Script creado (configuración básica). Falta endurecimiento de seguridad. |
 
 ### 8. Servidores Linux (Pendientes)
 
@@ -252,7 +251,7 @@ tags:
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
 | **IPsec Key** | `AEGIS-2026-VPN` |
 | **NHRP Auth** | `AEGIS` |
-| **Estado** | ⚠️ Script creado. Pendiente de integración. |
+| **Estado** |            |
 
 ### 13. Switch SW-5 (Puerto Plata) — Distribución L3
 
@@ -264,7 +263,7 @@ tags:
 | **Trunks** | `e0/0` → R-PUERTO-PLATA \| `e0/1` → sw-31 \| `e0/2` → sw-30 |
 | **STP** | Root Bridge (prioridad 24576) — Rapid PVST |
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
-| **Estado** | ⚠️ Script creado (configuración básica). Falta endurecimiento de seguridad. |
+| **Estado** |                                                 |
 
 ### 14. Switch sw-30 (Puerto Plata) — Acceso L2 (DFIR, Malware)
 
@@ -276,7 +275,6 @@ tags:
 | **Uplink** | `e0/0` → SW-5 (trunk) |
 | **Puertos Acceso** | `e0/1` → PC DFIR (VLAN 310) \| `e0/2` → PC Malware (VLAN 320) |
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
-| **Estado** | ⚠️ Script creado (configuración básica). Falta Port Security, DHCP Snooping, BPDU Guard. |
 
 ### 15. Switch sw-31 (Puerto Plata) — Acceso L2 (TH, Red Team, SOC)
 
@@ -288,7 +286,6 @@ tags:
 | **Uplink** | `e0/0` → SW-5 (trunk) |
 | **Puertos Acceso** | `e0/1` → PC Threat Intel (VLAN 330) \| `e0/2` → PC Red Team (VLAN 340) \| `e0/3` → PC SOC (VLAN 350) |
 | **Credenciales** | `enable secret AEGIS-2026` / `username admin privilege 15 secret AEGIS-2026` |
-| **Estado** | ⚠️ Script creado (configuración básica). Falta Port Security, DHCP Snooping, BPDU Guard. |
 
 ---
 
@@ -309,12 +306,12 @@ tags:
 | Fase | Alcance | Estado |
 |---|---|---|
 | **1** | Santo Domingo (hub + SOC) + La Romana (spoke) + ISP-NUBE | ✅ Implementada |
-| **2** | Santiago: R-SANTIAGO (DMVPN, OSPF Área 20) + SW-1 + SW-2 + Servidores Linux | ⚠️ Scripts creados, pendiente integración |
-| **3** | Puerto Plata: R-PUERTO-PLATA (spoke, OSPF Área 40) + SW-5 + sw-30 + sw-31 | ⚠️ Scripts creados, pendiente integración |
+| **2** | Santiago: R-SANTIAGO (DMVPN, OSPF Área 20) + SW-1 + SW-2 + Servidores Linux | 
+| **3** | Puerto Plata: R-PUERTO-PLATA (spoke, OSPF Área 40) + SW-5 + sw-30 + sw-31 | 
 
 ---
 
-## ⚠️ Inconsistencias Detectadas y Corregidas
+
 
 ### Credenciales y claves
 
