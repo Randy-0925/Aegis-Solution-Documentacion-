@@ -4,7 +4,7 @@ titulo: Descripción de Equipos — Aegis Solutions
 empresa: Aegis Solutions (MSSP)
 materia: TI-203 — Proyecto Final 2026-C2
 plataforma: PNETLab
-estado: Fase 1 completa; Fases 2-3 con scripts creados (pendientes de integración completa)
+estado: Fase 1 completa; Fases 2-3 con scripts creados
 tags:
   - ciberseguridad
   - redes
