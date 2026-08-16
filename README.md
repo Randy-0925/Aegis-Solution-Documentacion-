@@ -109,6 +109,7 @@ Funcion: Administración, SOC e Infraestructura Corporativa
 | Ventas                   | 110   | 60    |
 | Marketing                | 51    | 70    |
 
+<img width="900" height="609" alt="image" src="https://github.com/user-attachments/assets/1ff9580a-275d-4b43-925a-bad7137c8a79" />
 
 # Santiago
 
@@ -121,6 +122,8 @@ Funcion: Centro de Datos y Servicios Empresariales
 | Administración      | 5     | 140   |
 | Servidores          | 1     | 199   |
 
+<img width="843" height="567" alt="image" src="https://github.com/user-attachments/assets/3afdef0b-569c-4283-a345-e5ccf41b8956" />
+
 
 # La Romana
 
@@ -131,6 +134,8 @@ Funcion: Consultoría e Implementación de Proyectos
 | Dirección Regional            | 25    | 210   |
 | Consultoría TI                | 7     | 220   |
 | Ingeniería de Infraestructura | 57    | 230   |
+
+<img width="1078" height="452" alt="image" src="https://github.com/user-attachments/assets/9712795d-87f3-4472-ae9e-06e3e914c37f" />
 
 
 # Puerto Plata
@@ -144,6 +149,9 @@ Funcion: Laboratorio Avanzado de Ciberseguridad
 | Threat Intelligence  | 5     | 330   |
 | Red Team             | 8     | 340   |
 | Ciberseguridad (SOC) | 15    | 350   |
+
+<img width="812" height="507" alt="image" src="https://github.com/user-attachments/assets/0a87e46f-7d8c-4cf3-a47d-466edb973df7" />
+
 
 # 1. Tabla VLSM - Direccionamiento Privado (Red: 10.0.0.0/9)
 
