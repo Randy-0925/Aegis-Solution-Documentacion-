@@ -35,8 +35,7 @@ La arquitectura implementa un modelo **jerárquico de 3 capas** (Núcleo → Dis
 |Franchesca Soto Abreu |  2025-1625 | Equipo de Redes / Conectividad L3 |
 | Darling Nathali Fortuna García  | 2025-0722 | Equipo Documentación |
 |Randy Gabriel Troncoso Tejeda | 2024-2319 | Equipo de Documentacion |
-
-
+|Starlin De La Cruz Alonzo| 2025-2247 | Equipo de Marketing | 
 ---
 
 ## 🏗️ Arquitectura de Red
